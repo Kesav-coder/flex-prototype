@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gemini Models</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1f;
+            color: #f0f0f5;
+        }
+        h1 { color: #a855f7; }
+        pre {
+            background: #0d0d0f;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .model {
+            background: #131316;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #a855f7;
+        }
+        .error {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Checking Available Gemini Models</h1>
+    <div id="output">Loading...</div>
+
+    <script type="module">
+        import { CONFIG } from './config.js';
+
+        async function listModels() {
+            const output = document.getElementById('output');
+            
+            try {
+                output.innerHTML = '<p>Fetching available models...</p>';
+                
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.GEMINI_API_KEY}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                let html = '<h2>✅ Available Models:</h2>';
+                
+                data.models.forEach(model => {
+                    const supportsGenerate = model.supportedGenerationMethods?.includes('generateContent');
+                    html += `
+                        <div class="model">
+                            <strong>${model.name}</strong><br>
+                            Display Name: ${model.displayName}<br>
+                            Supports generateContent: ${supportsGenerate ? '✅' : '❌'}<br>
+                            Methods: ${model.supportedGenerationMethods?.join(', ') || 'None'}
+                        </div>
+                    `;
+                });
+                
+                output.innerHTML = html;
+                
+                console.log('Full API Response:', data);
+                
+            } catch (error) {
+                output.innerHTML = `
+                    <div class="error">
+                        <h2>❌ Error</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                console.error('Error:', error);
+            }
+        }
+
+        listModels();
+    </script>
+</body>
+</html>

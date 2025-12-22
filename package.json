@@ -1,0 +1,23 @@
+{
+  "name": "prototype-freaks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "anki-sm2.js",
+  "scripts": {
+    "dev": "npx http-server . -o",
+    "start": "npx http-server . -o",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MCKesav/prototype-freaks.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MCKesav/prototype-freaks/issues"
+  },
+  "homepage": "https://github.com/MCKesav/prototype-freaks#readme"
+}
