@@ -67,6 +67,8 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('user-info').style.display = 'block';
         document.getElementById('app-content').style.display = 'block';
         updateUserInfo(user);
+        // Render the main content
+        App.render();
     } else {
         // User is signed out
         console.log('User signed out');
@@ -3262,7 +3264,8 @@ const EventHandler = {
 // ============================================
 
 const App = {
-    render: () => {
+    // Initial render - creates the full structure including auth containers
+    renderInitial: () => {
         const app = document.getElementById('app');
         app.innerHTML = `
             <!-- Authentication UI -->
@@ -3275,24 +3278,37 @@ const App = {
                 
                 <!-- Main App Content (hidden until authenticated) -->
                 <div id="app-content" style="display: none;">
-                    ${Components.Header()}
-                    <main class="main-content">
-                        ${Components.SourcesPanel()}
-                        ${Components.ChatPanel()}
-                        ${Components.ToolsPanel()}
-                    </main>
-                    ${Components.UploadModal()}
-                    ${Components.ToolModal()}
-                    ${Components.SettingsModal()}
-                    ${Components.SourceValidationModal()}
-                    ${Components.SummaryModal()}
-                    ${Components.FlashcardModal()}
-                    ${Components.TimerModal()}
-                    ${Components.StatsModal()}
-                    ${Components.SessionHistoryModal()}
-                    ${Components.GamesModal()}
                 </div>
             </div>
+        `;
+    },
+
+    // Render only the main content area (doesn't touch auth UI)
+    render: () => {
+        const appContent = document.getElementById('app-content');
+        if (!appContent) {
+            // If app-content doesn't exist, do initial render
+            App.renderInitial();
+            return;
+        }
+        
+        appContent.innerHTML = `
+            ${Components.Header()}
+            <main class="main-content">
+                ${Components.SourcesPanel()}
+                ${Components.ChatPanel()}
+                ${Components.ToolsPanel()}
+            </main>
+            ${Components.UploadModal()}
+            ${Components.ToolModal()}
+            ${Components.SettingsModal()}
+            ${Components.SourceValidationModal()}
+            ${Components.SummaryModal()}
+            ${Components.FlashcardModal()}
+            ${Components.TimerModal()}
+            ${Components.StatsModal()}
+            ${Components.SessionHistoryModal()}
+            ${Components.GamesModal()}
         `;
 
         // Setup drag and drop
@@ -3329,7 +3345,7 @@ const App = {
     },
 
     init: () => {
-        App.render();
+        App.renderInitial();
         EventHandler.init();
     }
 };
