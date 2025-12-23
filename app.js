@@ -5,6 +5,113 @@
 import { CONFIG } from './config.js';
 import { FlashCardManager, Rating } from './anki-sm2.js';
 
+// ============================================
+// Firebase Authentication Setup
+// ============================================
+
+// Initialize Firebase with v9+ namespaced API (compat mode)
+firebase.initializeApp(CONFIG.FIREBASE_CONFIG);
+
+// Get Firebase Auth instance
+const auth = firebase.auth();
+
+// Initialize FirebaseUI
+const ui = new firebaseui.auth.AuthUI(auth);
+
+// FirebaseUI configuration
+const uiConfig = {
+    callbacks: {
+        signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+            // User successfully signed in
+            const user = authResult.user;
+            console.log('User signed in:', user.displayName || user.email);
+            return false; // Don't redirect
+        },
+        uiShown: function() {
+            // Hide loader when UI is shown
+            const loader = document.getElementById('firebaseui-auth-loader');
+            if (loader) loader.style.display = 'none';
+        }
+    },
+    signInFlow: 'popup',
+    signInSuccessUrl: window.location.href,
+    signInOptions: [
+        // Email/Password
+        firebase.auth.EmailAuthProvider.PROVIDER_ID,
+        // Google
+        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+        // Phone Number
+        {
+            provider: firebase.auth.PhoneAuthProvider.PROVIDER_ID,
+            recaptchaParameters: {
+                type: 'image',
+                size: 'normal',
+                badge: 'bottomleft'
+            },
+            defaultCountry: 'US' // Default to United States (+1)
+        }
+    ],
+    tosUrl: '#', // Terms of Service URL
+    privacyPolicyUrl: '#' // Privacy Policy URL
+};
+
+// Authentication state observer
+let currentUser = null;
+
+auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    if (user) {
+        // User is signed in
+        console.log('Authenticated user:', user.displayName || user.email);
+        document.getElementById('firebaseui-auth-container').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('app-content').style.display = 'block';
+        updateUserInfo(user);
+    } else {
+        // User is signed out
+        console.log('User signed out');
+        document.getElementById('firebaseui-auth-container').style.display = 'block';
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('app-content').style.display = 'none';
+        // Start FirebaseUI
+        ui.start('#firebaseui-auth-container', uiConfig);
+    }
+});
+
+// Update user info display
+function updateUserInfo(user) {
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) {
+        const photoURL = user.photoURL || 'https://via.placeholder.com/40';
+        const displayName = user.displayName || user.email || 'User';
+        userInfo.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--card-bg, #1a1a2e); border-radius: 8px;">
+                <img src="${photoURL}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600;">${displayName}</div>
+                    <div style="font-size: 0.85em; opacity: 0.7;">${user.email}</div>
+                </div>
+                <button onclick="handleSignOut()" style="padding: 8px 16px; background: #ff4757; border: none; border-radius: 4px; color: white; cursor: pointer;">
+                    Sign Out
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Sign out function (make it global)
+window.handleSignOut = function() {
+    auth.signOut().then(() => {
+        console.log('User signed out successfully');
+    }).catch((error) => {
+        console.error('Sign out error:', error);
+    });
+};
+
+// ============================================
+// Existing Code
+// ============================================
+
 // Initialize FlashCard Manager with Anki SM-2 Algorithm
 const flashcardManager = new FlashCardManager();
 
@@ -3158,22 +3265,34 @@ const App = {
     render: () => {
         const app = document.getElementById('app');
         app.innerHTML = `
-            ${Components.Header()}
-            <main class="main-content">
-                ${Components.SourcesPanel()}
-                ${Components.ChatPanel()}
-                ${Components.ToolsPanel()}
-            </main>
-            ${Components.UploadModal()}
-            ${Components.ToolModal()}
-            ${Components.SettingsModal()}
-            ${Components.SourceValidationModal()}
-            ${Components.SummaryModal()}
-            ${Components.FlashcardModal()}
-            ${Components.TimerModal()}
-            ${Components.StatsModal()}
-            ${Components.SessionHistoryModal()}
-            ${Components.GamesModal()}
+            <!-- Authentication UI -->
+            <div id="auth-wrapper" style="min-height: 100vh;">
+                <div id="user-info" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 1000;"></div>
+                <div id="firebaseui-auth-container" style="max-width: 500px; margin: 100px auto; padding: 20px;"></div>
+                <div id="firebaseui-auth-loader" style="text-align: center; margin: 100px auto;">
+                    <p>Loading authentication...</p>
+                </div>
+                
+                <!-- Main App Content (hidden until authenticated) -->
+                <div id="app-content" style="display: none;">
+                    ${Components.Header()}
+                    <main class="main-content">
+                        ${Components.SourcesPanel()}
+                        ${Components.ChatPanel()}
+                        ${Components.ToolsPanel()}
+                    </main>
+                    ${Components.UploadModal()}
+                    ${Components.ToolModal()}
+                    ${Components.SettingsModal()}
+                    ${Components.SourceValidationModal()}
+                    ${Components.SummaryModal()}
+                    ${Components.FlashcardModal()}
+                    ${Components.TimerModal()}
+                    ${Components.StatsModal()}
+                    ${Components.SessionHistoryModal()}
+                    ${Components.GamesModal()}
+                </div>
+            </div>
         `;
 
         // Setup drag and drop
