@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/MCKesav/prototype-freaks/issues"
   },
-  "homepage": "https://github.com/MCKesav/prototype-freaks#readme"
+  "homepage": "https://github.com/MCKesav/prototype-freaks#readme",
+  "dependencies": {
+    "@dataconnect/generated": "file:src/dataconnect-generated"
+  }
 }
